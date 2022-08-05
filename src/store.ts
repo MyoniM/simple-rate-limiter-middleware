@@ -82,7 +82,7 @@ export default class MemoryStore implements Store {
    * @private
    */
   private calculateNextResetTime = (accessTime: Date): Date => {
-    accessTime.setMilliseconds(accessTime.getSeconds() + this.windowSeconds);
+    accessTime.setSeconds(accessTime.getSeconds() + this.windowSeconds);
     return accessTime;
   };
 
