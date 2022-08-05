@@ -1,3 +1,5 @@
+// /src/main.ts
+
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import MemoryStore from "./store";
 import { Options, RateLimitExceededEventHandler, Store, ValueDeterminingMiddleware } from "./types";
@@ -129,8 +131,10 @@ const _omitUndefinedOptions = (passedOptions: Partial<Options>): Partial<Configu
   const omittedOptions: Partial<Configuration> = {};
 
   for (const k of Object.keys(passedOptions)) {
-    const key = k as keyof Configuration;
-    if (passedOptions[key] !== undefined) omittedOptions[key] = passedOptions[key];
+    const key = k as any;
+    if (passedOptions[key] !== undefined) {
+      omittedOptions[key] = passedOptions[key];
+    }
   }
   return omittedOptions;
 };
