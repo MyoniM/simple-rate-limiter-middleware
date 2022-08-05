@@ -1,6 +1,6 @@
 {
   "name": "simple-rate-limiter-middleware",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A simple in memory ip based rate limiter middleware for express apps.",
   "author": {
     "name": "Yonatan Merkebu",
@@ -45,7 +45,7 @@
   },
   "scripts": {
     "clean": "del-cli dist/",
-    "build:cjs": "esbuild --bundle --target=es2019 --format=cjs --outfile=dist/index.js src/index.ts",
+    "build:cjs": "esbuild --bundle --target=es2019 --format=cjs --outfile=dist/index.cjs --footer:js=\"module.exports = rateLimit; module.exports.default = rateLimit; module.exports.rateLimit = rateLimit; module.exports.MemoryStore = MemoryStore;\" src/index.ts",
     "build:esm": "esbuild --bundle --target=es2019 --format=esm --outfile=dist/index.mjs src/index.ts",
     "build:types": "dts-bundle-generator --out-file=dist/index.d.ts src/index.ts",
     "compile": "run-s clean build:*"

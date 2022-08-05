@@ -29,12 +29,11 @@ Import it in a CommonJS project (`type: commonjs` or no `type` field in
 `package.json`) as follows:
 
 ```ts
-const rateLimit = require("simple-rate-limiter-middleware");
+const { rateLimit, MemoryStore } = require("simple-rate-limiter-middleware");
 ```
 
 Import it in a ESM project (`type: module` in `package.json`) as follows:
 
 ```ts
-import rateLimit from "simple-rate-limiter-middleware";
+import { rateLimit, MemoryStore } from "simple-rate-limiter-middleware";
 ```
-
