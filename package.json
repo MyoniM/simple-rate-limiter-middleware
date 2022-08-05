@@ -1,6 +1,6 @@
 {
   "name": "simple-rate-limiter-middleware",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A simple in memory ip based rate limiter middleware for express apps.",
   "author": {
     "name": "Yonatan Merkebu",
@@ -37,8 +37,7 @@
   "files": [
     "dist/",
     "package.json",
-    "readme.md",
-    "tsconfig.json"
+    "readme.md"
   ],
   "engines": {
     "node": ">= 12.9.0"
