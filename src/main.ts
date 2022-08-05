@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
-import { SecondStore } from "./store";
-import { AugmentedRequest, Options, RateLimitExceededEventHandler, RateLimitRequestHandler, Store, ValueDeterminingMiddleware } from "./types";
+import MemoryStore from "./store";
+import { Options, RateLimitExceededEventHandler, Store, ValueDeterminingMiddleware } from "./types";
 
 interface Configuration {
   message: any;
@@ -9,16 +9,16 @@ interface Configuration {
   standardHeaders: boolean;
   keyGenerator: ValueDeterminingMiddleware<string>;
   handler: RateLimitExceededEventHandler;
-  secondStore: Store | undefined;
-  //   minuteStore: Store | undefined;
-  //   hourStore: Store | undefined;
+  store: Store;
 }
 
 const parseOptions = (passedOptions: Partial<Options>) => {
   // Passing undefined should be equivalent to not passing an option at all, so we'll
   // omit all fields where their value is undefined.
-  const notUndefinedOptions: Partial<Options> = omitUndefinedOptions(passedOptions);
-
+  const notUndefinedOptions: Partial<Options> = _omitUndefinedOptions(passedOptions);
+  if (!notUndefinedOptions.store) {
+    console.error("WARN `store` is undefined. You must create a custom MemoryStore with preferred options.");
+  }
   const configuration: Configuration = {
     statusCode: 429,
     message: "Too many requests, please try again later.",
@@ -38,9 +38,7 @@ const parseOptions = (passedOptions: Partial<Options>) => {
     },
     ...notUndefinedOptions,
     // Allow the options object to be overridden by the options passed to the middleware.
-    secondStore: passedOptions.secondStore,
-    // minuteStore: new SecondStore(),
-    // hourStore: new SecondStore(),
+    store: notUndefinedOptions.store ?? new MemoryStore(),
   };
   return configuration;
 };
@@ -55,7 +53,7 @@ const parseOptions = (passedOptions: Partial<Options>) => {
  *
  * @private
  */
-const handleAsyncErrors =
+const _handleAsyncErrors =
   (fn: RequestHandler): RequestHandler =>
   async (request: Request, response: Response, next: NextFunction) => {
     try {
@@ -71,39 +69,41 @@ const handleAsyncErrors =
  *
  * @param passedOptions {Options} - Options to configure the rate limiter.
  *
- * @returns {RateLimitRequestHandler} - The middleware that rate-limits clients based on your configuration.
+ * @returns {RequestHandler} - The middleware that rate-limits clients based on your configuration.
  *
  * @public
  */
-const rateLimit = (passedOptions?: Partial<Options>): RateLimitRequestHandler => {
+const rateLimit = (passedOptions: Partial<Options>): RequestHandler => {
   // Parse the options and add the default values for unspecified options
   const options = parseOptions(passedOptions ?? {});
 
-  const middleware = handleAsyncErrors(async (request: Request, response: Response, next: NextFunction) => {
-    // Create an augmented request
-    const augmentedRequest = request as AugmentedRequest;
+  const middleware = _handleAsyncErrors(async (request: Request, response: Response, next: NextFunction) => {
     // Get a unique key for the client
     const key = await options.keyGenerator(request, response);
-    // Increment the client's hit counter by one
-    const { hasPassedLimit, totalHits, resetTime } = await options.secondStore!.increment(key);
-    const maxConnectionForSecondStore = options.secondStore!.maxConnections;
-    console.log({ hasPassedLimit, totalHits, resetTime });
+
+    // Increment the client's hit count by one
+    const { hasPassedLimit, totalHits, resetTime } = await options.store.increment(key);
+    const maxConnection = options.store.maxConnections;
 
     // Set the legacy RateLimit headers on the response object if enabled
     if (options.legacyHeaders) {
-      response.setHeader("X-RateLimit-Limit", maxConnectionForSecondStore);
-      response.setHeader("X-RateLimit-Remaining", maxConnectionForSecondStore - totalHits);
+      response.setHeader("X-RateLimit-Limit", maxConnection);
+      response.setHeader("X-RateLimit-Used", totalHits);
+      response.setHeader("X-RateLimit-Remaining", maxConnection - totalHits);
     }
 
     // Set the standardized RateLimit headers on the response object if enabled
     if (options.standardHeaders) {
-      response.setHeader("RateLimit-Limit", maxConnectionForSecondStore);
-      response.setHeader("RateLimit-Remaining", maxConnectionForSecondStore - totalHits);
+      response.setHeader("RateLimit-Limit", maxConnection);
+      response.setHeader("RateLimit-Used", totalHits);
+      response.setHeader("RateLimit-Remaining", maxConnection - totalHits);
     }
+
     // If the client has exceeded their rate limit, set the Retry-After header
     // and call the `handler` function
     if (hasPassedLimit) {
-      response.setHeader("Retry-After", resetTime.toISOString());
+      if (options.legacyHeaders) response.setHeader("X-Retry-After", resetTime.toISOString());
+      if (options.standardHeaders) response.setHeader("Retry-After", resetTime.toISOString());
       options.handler(request, response, next, options);
       return;
     }
@@ -111,7 +111,7 @@ const rateLimit = (passedOptions?: Partial<Options>): RateLimitRequestHandler =>
     next();
   });
 
-  return middleware as RateLimitRequestHandler;
+  return middleware as RequestHandler;
 };
 
 /**
@@ -125,15 +125,14 @@ const rateLimit = (passedOptions?: Partial<Options>): RateLimitRequestHandler =>
  *
  * @private
  */
-const omitUndefinedOptions = (passedOptions: Partial<Options>): Partial<Configuration> => {
+const _omitUndefinedOptions = (passedOptions: Partial<Options>): Partial<Configuration> => {
   const omittedOptions: Partial<Configuration> = {};
 
   for (const k of Object.keys(passedOptions)) {
     const key = k as keyof Configuration;
-
     if (passedOptions[key] !== undefined) omittedOptions[key] = passedOptions[key];
   }
-
   return omittedOptions;
 };
+
 export default rateLimit;

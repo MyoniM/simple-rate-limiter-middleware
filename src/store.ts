@@ -1,4 +1,4 @@
-import { Options, IncrementResponse, Store } from "./types";
+import { IncrementResponse, Store } from "./types";
 
 /**
  * A `Store` that stores the hit count for each client in the given second window.
@@ -6,12 +6,30 @@ import { Options, IncrementResponse, Store } from "./types";
  * @public
  */
 
-export class SecondStore implements Store {
+export default class MemoryStore implements Store {
+  /**
+   *  The duration of time before which all hit counts are reset (in seconds). Defaults to `0`.
+   */
   readonly windowSeconds: number;
-  readonly maxConnections: number;
-  hits = {};
 
-  constructor(windowSeconds: number, maxConnections: number) {
+  /**
+   * The maximum number of connections to allow during the `window` before rate limiting the client. Defaults to `5`.
+   */
+  readonly maxConnections: number;
+
+  /**
+   * The map that stores the number of hits for each client in memory.
+   */
+  readonly hits = {};
+
+  /**
+   * MemoryStore constructor
+   *
+   * @param windowSeconds {number} - The duration of time before which all hit counts are reset (in seconds). Defaults to `0`.
+   * @param maxConnections {number} - The maximum number of connections to allow during the `window` before rate limiting the client. Defaults to `5`.
+   *
+   */
+  constructor(windowSeconds?: number, maxConnections?: number) {
     this.windowSeconds = windowSeconds ?? 0;
     this.maxConnections = maxConnections ?? 5;
   }
@@ -71,7 +89,8 @@ export class SecondStore implements Store {
   /**
    * Creates a new record for the client.
    *
-   * @param accessTime {number} - The date that client first accessed the store.
+   * @param accessTime {Date} - The date that client first accessed the store.
+   * @param key {string} - The identifier for a given client.
    * @returns {IncrementResponse}
    *
    * @private
@@ -79,15 +98,5 @@ export class SecondStore implements Store {
   private createNewRecord(accessTime: Date, key: string): IncrementResponse {
     this.hits[key] = { firstAccessTime: accessTime, totalHits: 1 };
     return { hasPassedLimit: false, totalHits: this.hits[key].totalHits++, resetTime: this.calculateNextResetTime(accessTime) };
-  }
-
-  async cleanStore(): Promise<void> {
-    const accessTime = new Date();
-    for (let key in this.hits) {
-      const client = this.hits[key];
-      // check if the firstAccessTime was after windowSeconds seconds and remove key if true
-      if ((accessTime.getTime() - client.firstAccessTime.getTime()) / 1000 > this.windowSeconds) {
-      }
-    }
   }
 }

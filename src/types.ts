@@ -12,18 +12,6 @@ import { Request, Response, NextFunction, RequestHandler } from "express";
 export type RateLimitExceededEventHandler = (request: Request, response: Response, next: NextFunction, optionsUsed: Options) => void;
 
 /**
- * A modified Express request handler with the rate limit functions.
- */
-export type RateLimitRequestHandler = RequestHandler & {
-  /**
-   * Method to reset a client's hit counter.
-   *
-   * @param key {string} - The identifier for a client.
-   */
-  resetKey: (key: string) => void;
-};
-
-/**
  * An interface that all hit counter stores must implement.
  */
 export interface Store {
@@ -32,7 +20,8 @@ export interface Store {
    *
    * Defaults to `0`.
    */
-  windowSeconds: number;
+  readonly windowSeconds: number;
+
   /**
    * The maximum number of connections to allow during the `window` before
    * rate limiting the client.
@@ -40,10 +29,12 @@ export interface Store {
    * Defaults to `5`.
    */
   readonly maxConnections: number;
+
   /**
    * The map that stores the number of hits for each client in memory.
    */
-  hits: { [key: string]: number | undefined };
+  hits: { [key: string]: any };
+
   /**
    * Method to increment a client's hit counter.
    *
@@ -92,9 +83,7 @@ export interface Options {
    *
    * By default, the built-in `MemoryStore` will be used.
    */
-  secondStore?: Store;
-  minuteStore?: Store;
-  hourStore?: Store;
+  store: Store;
 }
 
 /**
@@ -119,22 +108,3 @@ export type IncrementResponse = {
  * @returns {T} - The value needed.
  */
 export type ValueDeterminingMiddleware<T> = (request: Request, response: Response) => T | Promise<T>;
-
-/**
- * The extended request object that includes information about the client's
- * rate limit.
- */
-export type AugmentedRequest = Request & {
-  [key: string]: RateLimitInfo;
-};
-
-/**
- * The rate limit related information for each client included in the
- * Express request object.
- */
-export interface RateLimitInfo {
-  readonly limit: number;
-  readonly current: number;
-  readonly remaining: number;
-  readonly resetTime: Date | undefined;
-}

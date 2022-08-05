@@ -5,4 +5,4 @@ export * from "./types.js";
 export { default, default as rateLimit } from "./main.js";
 
 // Export the store
-export { SecondStore } from "./store.js";
+export { default as MemoryStore } from "./store.js";

@@ -1,7 +1,29 @@
 {
-  "name": "rate-limiter",
-  "version": "1.0.0",
-  "description": "",
+  "name": "rate-limiter-middleware",
+  "version": "0.0.1",
+  "description": "A simple in memory rate limiter middleware for express apps.",
+  "author": {
+    "name": "Yonatan Merkebu",
+    "url": "https://yonatanmerkebu.web.app/"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/MyoniM/rate-limiter-middleware",
+  "repository": "https://github.com/MyoniM/rate-limiter-middleware",
+  "keywords": [
+    "express-rate-limit",
+    "rate-limit-middleware",
+    "express",
+    "rate",
+    "limit",
+    "ratelimit",
+    "rate-limit",
+    "middleware",
+    "ip",
+    "security",
+    "dos",
+    "ddos",
+    "attack"
+  ],
   "type": "module",
   "exports": {
     ".": {
@@ -11,21 +33,25 @@
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/",
+    "package.json",
+    "readme.md"
+  ],
+  "engines": {
+    "node": ">= 12.9.0"
+  },
   "scripts": {
     "clean": "del-cli dist/",
     "build:cjs": "esbuild --bundle --target=es2019 --format=cjs --outfile=dist/index.js src/index.ts",
     "build:esm": "esbuild --bundle --target=es2019 --format=esm --outfile=dist/index.mjs src/index.ts",
     "compile": "run-s clean build:*"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "esbuild": "^0.14.53"
-  },
   "devDependencies": {
     "@types/express": "^4.17.13",
     "del-cli": "^5.0.0",
+    "esbuild": "^0.14.53",
     "express": "^4.18.1",
     "npm-run-all": "^4.1.5",
     "typescript": "^4.7.4"
