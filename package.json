@@ -1,6 +1,6 @@
 {
   "name": "simple-rate-limiter-middleware",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "A simple in memory ip based rate limiter middleware for express apps.",
   "author": {
     "name": "Yonatan Merkebu",
