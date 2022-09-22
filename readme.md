@@ -9,6 +9,7 @@ A simple in memory ip based rate limiter middleware for express apps.
 
 </div>
 
+<p>Note that this is a copy of express-middleware. It only has a slight modification to make it simpler.</p>
 ## Installation
 
 ```sh
